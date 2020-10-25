@@ -190,7 +190,7 @@ mod tests {
 
         assert!(validator.has_error())
 
-        // nnnn
+        // nnnn xxx
     }
 
     #[test]
