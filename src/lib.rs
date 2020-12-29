@@ -8,6 +8,7 @@ pub mod validation {
     use serde::Deserialize;
     use serde_json;
     use regex::{Regex};
+    use std::any::Any;
 
 
     lazy_static! {
@@ -18,8 +19,10 @@ pub mod validation {
     pub struct Error {
         title: String,
         message: String,
-        value: String,
-        value_num: i64,
+        #[serde(rename = "value" , skip_serializing_if="String::is_empty")]
+        value_string: String,
+        #[serde(rename = "value" , skip_serializing_if="is_zero")]
+        value_num: f64,
         ok: bool,
     }
 
@@ -28,6 +31,9 @@ pub mod validation {
         obj_vec: Vec<Error>
     }
 
+    fn is_zero(num: &f64) -> bool {
+        *num == 0 as f64
+    }
 
     pub struct Validator {
         validation_result: ValidationResult,
@@ -39,23 +45,34 @@ pub mod validation {
             Validator { validation_result: ValidationResult::default(), validation_obj: Error::default()}
         }
 
-        pub fn require_string(&mut self, value: String) -> &mut Self {
-
-            self.validation_obj.value = value;
-            self.validation_obj.ok = !self.validation_obj.value.is_empty();
-
-            self
-        }
-        pub fn require_string_opt(&mut self, value: Option<String>) -> &mut Self {
-
-            match value {
+        pub fn require_opt(&mut self, value: Option<&dyn Any>) -> &mut Self {
+            return match value {
                 Some(v) => {
-                    self.validation_obj.value = v;
-                    self.validation_obj.ok = !self.validation_obj.value.is_empty();
-                    self
+                    match v.downcast_ref::<String>() {
+                        Some(as_data) => {
+                            self.validation_obj.value_string = as_data.clone();
+                            self.validation_obj.ok = !self.validation_obj.value_string.is_empty();
+                            return self;
+                        }
+                        None => {
+                            match v.downcast_ref::<f64>() {
+                                Some(as_data) => {
+                                    self.validation_obj.value_num = *as_data;
+                                    self.validation_obj.ok = self.validation_obj.value_num != 0 as f64;
+                                    return self;
+                                }
+                                None => {
+                                    self.validation_obj.value_string = "invalid value type".to_string();
+                                    self.validation_obj.ok = false;
+                                    return self;
+                                }
+                            }
+                        }
+                    }
+
                 },
                 None => {
-                    self.validation_obj.value = "Unspecified value!".to_string();
+                    self.validation_obj.value_string = "Unspecified value!".to_string();
                     self.validation_obj.ok = false;
                     self
                 }
@@ -67,12 +84,12 @@ pub mod validation {
 
             match value {
                 Some(v) => {
-                    self.validation_obj.value = v;
-                    self.validation_obj.ok = EMAIL_REGEX.is_match(self.validation_obj.value.as_str());
+                    self.validation_obj.value_string = v;
+                    self.validation_obj.ok = EMAIL_REGEX.is_match(self.validation_obj.value_string.as_str());
                     self
                 },
                 None => {
-                    self.validation_obj.value = "Unspecified value!".to_string();
+                    self.validation_obj.value_string = "Unspecified value!".to_string();
                     self.validation_obj.ok = false;
                     self
                 }
@@ -84,12 +101,12 @@ pub mod validation {
 
             match value {
                 Some(v) => {
-                    self.validation_obj.value = v;
-                    self.validation_obj.ok = self.validation_obj.value.len() >= min;
+                    self.validation_obj.value_string = v;
+                    self.validation_obj.ok = self.validation_obj.value_string.len() >= min;
                     self
                 },
                 None => {
-                    self.validation_obj.value = "Unspecified value!".to_string();
+                    self.validation_obj.value_string = "Unspecified value!".to_string();
                     self.validation_obj.ok = false;
                     self
                 }
@@ -101,12 +118,12 @@ pub mod validation {
 
             match value {
                 Some(v) => {
-                    self.validation_obj.value = v;
-                    self.validation_obj.ok = self.validation_obj.value.len() <= max;
+                    self.validation_obj.value_string = v;
+                    self.validation_obj.ok = self.validation_obj.value_string.len() <= max;
                     self
                 },
                 None => {
-                    self.validation_obj.value = "Unspecified value!".to_string();
+                    self.validation_obj.value_string = "Unspecified value!".to_string();
                     self.validation_obj.ok = false;
                     self
                 }
@@ -114,16 +131,16 @@ pub mod validation {
 
         }
 
-        pub fn require_positive_opt(&mut self, value: Option<i64>) -> &mut Self {
+        pub fn require_positive_opt(&mut self, value: Option<f64>) -> &mut Self {
 
             match value {
                 Some(v) => {
                     self.validation_obj.value_num = v;
-                    self.validation_obj.ok = self.validation_obj.value_num > -1;
+                    self.validation_obj.ok = self.validation_obj.value_num > -1 as f64;
                     self
                 },
                 None => {
-                    self.validation_obj.value = "Unspecified value!".to_string();
+                    self.validation_obj.value_string = "Unspecified value!".to_string();
                     self.validation_obj.ok = false;
                     self
                 }
@@ -178,8 +195,9 @@ mod tests {
     #[test]
     fn require_string() {
         let mut validator = validation::Validator::new();
-        validator.require_string_opt(Some("".into())).title("value".into()).message("the value is mandatory".to_string()).build();
+        validator.require_opt(Some(&(33))).title("value".into()).message("the value is mandatory".to_string()).build();
 
+        println!("{}" , validator.errors_to_string());
         assert!(validator.has_error())
     }
 
