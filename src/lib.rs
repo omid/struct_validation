@@ -189,8 +189,7 @@ mod tests {
         validator.email_string_opt(Some("test@test.".into())).title("email".into()).message("invalid email address".to_string()).build();
 
         assert!(validator.has_error())
-
-        // nnnn xxx
+        // test oooooo
     }
 
     #[test]
