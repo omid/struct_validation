@@ -45,36 +45,54 @@ pub mod validation {
             Validator { validation_result: ValidationResult::default(), validation_obj: Error::default()}
         }
 
-        pub fn require_opt(&mut self, value: Option<&dyn Any>) -> &mut Self {
-            return match value {
-                Some(v) => {
-                    match v.downcast_ref::<String>() {
-                        Some(as_data) => {
-                            self.validation_obj.value_string = as_data.clone();
+        pub fn require_opt<T : Any>(&mut self, value: T) -> &mut Self {
+            let of_any = &value as &dyn Any;
+
+            return match of_any.downcast_ref::<Option<String>>() {
+                Some(as_data) => {
+
+                    match as_data{
+                        Some(v) =>{
+                            self.validation_obj.value_string = v.clone();
                             self.validation_obj.ok = !self.validation_obj.value_string.is_empty();
-                            return self;
+                            self
                         }
                         None => {
-                            match v.downcast_ref::<f64>() {
-                                Some(as_data) => {
-                                    self.validation_obj.value_num = *as_data;
-                                    self.validation_obj.ok = self.validation_obj.value_num != 0 as f64;
-                                    return self;
-                                }
-                                None => {
-                                    self.validation_obj.value_string = "invalid value type".to_string();
-                                    self.validation_obj.ok = false;
-                                    return self;
-                                }
-                            }
+                            self.validation_obj.value_string = "Unspecified value!".to_string();
+                            self.validation_obj.ok = false;
+                            self
                         }
                     }
 
-                },
+
+                }
                 None => {
-                    self.validation_obj.value_string = "Unspecified value!".to_string();
-                    self.validation_obj.ok = false;
-                    self
+
+                    match of_any.downcast_ref::<Option<f64>>() {
+                        Some(as_data) => {
+
+                            match as_data{
+                                Some(v) =>{
+                                    self.validation_obj.value_num = v.clone();
+                                    self.validation_obj.ok = self.validation_obj.value_num != 0 as f64 ;
+                                    self
+                                }
+                                None => {
+                                    self.validation_obj.value_string = "Unspecified value!".to_string();
+                                    self.validation_obj.ok = false;
+                                    self
+                                }
+                            }
+
+
+                        }
+                        None => {
+                            self.validation_obj.value_string = "invalid value type".to_string();
+                            self.validation_obj.ok = false;
+                            self
+                        }
+                    }
+
                 }
             }
 
@@ -194,10 +212,12 @@ mod tests {
 
     #[test]
     fn require_string() {
-        let mut validator = validation::Validator::new();
-        validator.require_opt(Some(&(33))).title("value".into()).message("the value is mandatory".to_string()).build();
 
-        println!("{}" , validator.errors_to_string());
+        let test_value = Some("".to_string());
+
+        let mut validator = validation::Validator::new();
+        validator.require_opt(test_value).title("value".into()).message("the value is mandatory".to_string()).build();
+
         assert!(validator.has_error())
     }
 
@@ -207,7 +227,7 @@ mod tests {
         validator.email_string_opt(Some("test@test.".into())).title("email".into()).message("invalid email address".to_string()).build();
 
         assert!(validator.has_error())
-        // test oooooo
+
     }
 
     #[test]
