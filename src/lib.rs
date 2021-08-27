@@ -4,237 +4,498 @@ extern crate lazy_static;
 
 
 pub mod validation {
-    use serde::Serialize;
+    use serde::{Serialize, Serializer};
     use serde::Deserialize;
     use serde_json;
     use regex::{Regex};
     use std::any::Any;
+    use serde::ser::SerializeStruct;
+    use std::fmt::{Debug, Formatter, Display};
+    use dyn_clone::DynClone;
+    use std::fmt;
 
+    dyn_clone::clone_trait_object!(ObjectTrait);
 
-    lazy_static! {
-    pub static ref EMAIL_REGEX:Regex = Regex::new(r"^([a-z0-9_+]([a-z0-9_+.]*[a-z0-9_+])?)@([a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]+)").unwrap();
-}
+    trait ObjectTrait: Any + DynClone{
+        fn as_any(&self) -> &dyn Any;
+    }
+    pub trait AddRequire<T>{
+        fn require(&mut self , v : T) -> &mut Self;
+    }
 
-    #[derive(Clone , Default , Debug,Serialize, Deserialize)]
-    pub struct Error {
-        title: String,
-        message: String,
-        #[serde(rename = "value" , skip_serializing_if="String::is_empty")]
-        value_string: String,
-        #[serde(rename = "value" , skip_serializing_if="is_zero")]
-        value_num: f64,
+    #[derive( Debug , Serialize , Clone)]
+    pub struct Error<'a> {
+        title: &'a str,
+        message: &'a str,
+        value: Box<dyn ObjectTrait>,
         ok: bool,
     }
 
-    #[derive(Clone , Default , Debug,Serialize, Deserialize)]
-    struct ValidationResult {
-        obj_vec: Vec<Error>
+    pub struct Validator<'a> {
+        err_vec: Vec<Error<'a>>,
+        err : Error<'a>
     }
 
-    fn is_zero(num: &f64) -> bool {
-        *num == 0 as f64
-    }
-
-    pub struct Validator {
-        validation_result: ValidationResult,
-        validation_obj: Error
-    }
-
-    impl Validator {
-        pub fn new() -> Self {
-            Validator { validation_result: ValidationResult::default(), validation_obj: Error::default()}
-        }
-
-        pub fn require_opt<T : Any>(&mut self, value: T) -> &mut Self {
-            let of_any = &value as &dyn Any;
-
-            return match of_any.downcast_ref::<Option<String>>() {
-                Some(as_data) => {
-
-                    match as_data{
-                        Some(v) =>{
-                            self.validation_obj.value_string = v.clone();
-                            self.validation_obj.ok = !self.validation_obj.value_string.is_empty();
-                            self
-                        }
-                        None => {
-                            self.validation_obj.value_string = "Unspecified value!".to_string();
-                            self.validation_obj.ok = false;
-                            self
-                        }
+    impl Error<'_>{
+        fn check_ok(&mut self){
+            match self.value.as_any().downcast_ref::<String>() {
+                Some(d) => {
+                    if d.is_empty() {
+                        self.ok = false
+                    }else{
+                        self.ok = true
                     }
-
-
                 }
                 None => {
 
-                    match of_any.downcast_ref::<Option<f64>>() {
-                        Some(as_data) => {
+                    match self.value.as_any().downcast_ref::<i8>() {
+                        Some(d) => {
+                            if *d > 0 {
+                                self.ok = false
+                            }else{
+                                self.ok = true
+                            }
+                        }
+                        None => {
 
-                            match as_data{
-                                Some(v) =>{
-                                    self.validation_obj.value_num = v.clone();
-                                    self.validation_obj.ok = self.validation_obj.value_num != 0 as f64 ;
-                                    self
+                            match self.value.as_any().downcast_ref::<i16>() {
+                                Some(d) => {
+                                    if *d > 0 {
+                                        self.ok = false
+                                    }else{
+                                        self.ok = true
+                                    }
                                 }
                                 None => {
-                                    self.validation_obj.value_string = "Unspecified value!".to_string();
-                                    self.validation_obj.ok = false;
-                                    self
+
+                                    match self.value.as_any().downcast_ref::<i32>() {
+                                        Some(d) => {
+                                            if *d > 0 {
+                                                self.ok = false
+                                            }else{
+                                                self.ok = true
+                                            }
+                                        }
+                                        None => {
+
+                                            match self.value.as_any().downcast_ref::<i64>() {
+                                                Some(d) => {
+                                                    if *d > 0 {
+                                                        self.ok = false
+                                                    }else{
+                                                        self.ok = true
+                                                    }
+                                                }
+                                                None => {
+
+                                                    match self.value.as_any().downcast_ref::<i128>() {
+                                                        Some(d) => {
+                                                            if *d > 0 {
+                                                                self.ok = false
+                                                            }else{
+                                                                self.ok = true
+                                                            }
+                                                        }
+                                                        None => {
+
+                                                            match self.value.as_any().downcast_ref::<isize>() {
+                                                                Some(d) => {
+                                                                    if *d > 0 {
+                                                                        self.ok = false
+                                                                    }else{
+                                                                        self.ok = true
+                                                                    }
+                                                                }
+                                                                None => {
+
+
+                                                                    match self.value.as_any().downcast_ref::<u8>() {
+                                                                        Some(d) => {
+                                                                            if *d > 0 {
+                                                                                self.ok = false
+                                                                            }else{
+                                                                                self.ok = true
+                                                                            }
+                                                                        }
+                                                                        None => {
+
+
+                                                                            match self.value.as_any().downcast_ref::<u16>() {
+                                                                                Some(d) => {
+                                                                                    if *d > 0 {
+                                                                                        self.ok = false
+                                                                                    }else{
+                                                                                        self.ok = true
+                                                                                    }
+                                                                                }
+                                                                                None => {
+
+                                                                                    match self.value.as_any().downcast_ref::<u32>() {
+                                                                                        Some(d) => {
+                                                                                            if *d > 0 {
+                                                                                                self.ok = false
+                                                                                            }else{
+                                                                                                self.ok = true
+                                                                                            }
+                                                                                        }
+                                                                                        None => {
+
+                                                                                            match self.value.as_any().downcast_ref::<u64>() {
+                                                                                                Some(d) => {
+                                                                                                    if *d > 0 {
+                                                                                                        self.ok = false
+                                                                                                    }else{
+                                                                                                        self.ok = true
+                                                                                                    }
+                                                                                                }
+                                                                                                None => {
+
+                                                                                                    match self.value.as_any().downcast_ref::<u128>() {
+                                                                                                        Some(d) => {
+                                                                                                            if *d > 0 {
+                                                                                                                self.ok = false
+                                                                                                            }else{
+                                                                                                                self.ok = true
+                                                                                                            }
+                                                                                                        }
+                                                                                                        None => {
+
+                                                                                                            match self.value.as_any().downcast_ref::<usize>() {
+                                                                                                                Some(d) => {
+                                                                                                                    if *d > 0 {
+                                                                                                                        self.ok = false
+                                                                                                                    }else{
+                                                                                                                        self.ok = true
+                                                                                                                    }
+                                                                                                                }
+                                                                                                                None => {
+
+
+                                                                                                                    match self.value.as_any().downcast_ref::<f32>() {
+                                                                                                                        Some(d) => {
+                                                                                                                            if *d > 0 as f32 {
+                                                                                                                                self.ok = false
+                                                                                                                            }else{
+                                                                                                                                self.ok = true
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                        None => {
+
+
+                                                                                                                            match self.value.as_any().downcast_ref::<f64>() {
+                                                                                                                                Some(d) => {
+                                                                                                                                    if *d > 0 as f64 {
+                                                                                                                                        self.ok = false
+                                                                                                                                    }else{
+                                                                                                                                        self.ok = true
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                                None => {
+
+                                                                                                                                    self.ok = false
+
+
+                                                                                                                                }
+                                                                                                                            }
+
+                                                                                                                        }
+                                                                                                                    }
+
+                                                                                                                }
+                                                                                                            }
+
+
+                                                                                                        }
+                                                                                                    }
+
+
+                                                                                                }
+                                                                                            }
+
+
+                                                                                        }
+                                                                                    }
+
+
+                                                                                }
+                                                                            }
+
+                                                                        }
+                                                                    }
+
+                                                                }
+                                                            }
+
+
+                                                        }
+                                                    }
+
+
+                                                }
+                                            }
+
+
+                                        }
+                                    }
+
+
                                 }
                             }
 
 
                         }
+                    }
+
+
+                }
+            }
+        }
+
+        fn new()-> Self{
+            Self{
+                title: "",
+                message: "",
+                value: Box::new("".to_string()),
+                ok: true
+            }
+        }
+
+    }
+
+    impl Serialize for dyn ObjectTrait {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where S: Serializer {
+            let mut s;
+
+            match self.as_any().downcast_ref::<String>()  {
+                Some(d) => {
+                    s = serializer.serialize_str(d)
+                }
+                None => {
+
+                    match self.as_any().downcast_ref::<i8>() {
+                        Some(d) => {
+                            s = serializer.serialize_i8(*d)
+                        }
                         None => {
-                            self.validation_obj.value_string = "invalid value type".to_string();
-                            self.validation_obj.ok = false;
-                            self
+
+                            match self.as_any().downcast_ref::<i16>() {
+                                Some(d) => {
+                                    s = serializer.serialize_i16(*d)
+                                }
+                                None => {
+
+                                    match self.as_any().downcast_ref::<i32>() {
+                                        Some(d) => {
+                                            s = serializer.serialize_i32(*d)
+                                        }
+                                        None => {
+
+                                            match self.as_any().downcast_ref::<i64>() {
+                                                Some(d) => {
+                                                    s = serializer.serialize_i64(*d)
+                                                }
+                                                None => {
+
+                                                    match self.as_any().downcast_ref::<u8>() {
+                                                        Some(d) => {
+                                                            s = serializer.serialize_u8(*d)
+                                                        }
+                                                        None => {
+
+                                                            match self.as_any().downcast_ref::<u16>() {
+                                                                Some(d) => {
+                                                                    s = serializer.serialize_u16(*d)
+                                                                }
+                                                                None => {
+
+
+                                                                    match self.as_any().downcast_ref::<u32>()  {
+                                                                        Some(d) => {
+                                                                            s = serializer.serialize_u32(*d)
+                                                                        }
+                                                                        None => {
+
+
+                                                                            match self.as_any().downcast_ref::<u64>()  {
+                                                                                Some(d) => {
+                                                                                    s = serializer.serialize_u64(*d)
+                                                                                }
+                                                                                None => {
+
+                                                                                    match self.as_any().downcast_ref::<f32>() {
+                                                                                        Some(d) => {
+                                                                                            s = serializer.serialize_f32(*d)
+                                                                                        }
+                                                                                        None => {
+
+                                                                                            match self.as_any().downcast_ref::<f64>() {
+                                                                                                Some(d) => {
+                                                                                                    s = serializer.serialize_f64(*d)
+                                                                                                }
+                                                                                                None => {
+
+                                                                                                    s = serializer.serialize_str("cant serialize!!!")
+
+
+                                                                                                }
+                                                                                            }
+
+
+                                                                                        }
+                                                                                    }
+
+
+                                                                                }
+                                                                            }
+
+                                                                        }
+                                                                    }
+
+                                                                }
+                                                            }
+
+
+                                                        }
+                                                    }
+
+
+                                                }
+                                            }
+
+
+                                        }
+                                    }
+
+
+                                }
+                            }
+
+
                         }
                     }
 
+
                 }
             }
 
+            s
+        }
+    }
+
+    impl<'a> Validator<'a>{
+        pub fn new() -> Self {
+            Validator { err_vec: vec![], err : Error::new() }
         }
 
-        pub fn email_string_opt(&mut self, value: Option<String>) -> &mut Self {
-
-            match value {
-                Some(v) => {
-                    self.validation_obj.value_string = v;
-                    self.validation_obj.ok = EMAIL_REGEX.is_match(self.validation_obj.value_string.as_str());
-                    self
-                },
-                None => {
-                    self.validation_obj.value_string = "Unspecified value!".to_string();
-                    self.validation_obj.ok = false;
-                    self
-                }
-            }
-
-        }
-
-        pub fn min_string_opt(&mut self, value: Option<String> , min : usize) -> &mut Self {
-
-            match value {
-                Some(v) => {
-                    self.validation_obj.value_string = v;
-                    self.validation_obj.ok = self.validation_obj.value_string.len() >= min;
-                    self
-                },
-                None => {
-                    self.validation_obj.value_string = "Unspecified value!".to_string();
-                    self.validation_obj.ok = false;
-                    self
-                }
-            }
-
-        }
-
-        pub fn max_string_opt(&mut self, value: Option<String> , max : usize) -> &mut Self {
-
-            match value {
-                Some(v) => {
-                    self.validation_obj.value_string = v;
-                    self.validation_obj.ok = self.validation_obj.value_string.len() <= max;
-                    self
-                },
-                None => {
-                    self.validation_obj.value_string = "Unspecified value!".to_string();
-                    self.validation_obj.ok = false;
-                    self
-                }
-            }
-
-        }
-
-        pub fn require_positive_opt(&mut self, value: Option<f64>) -> &mut Self {
-
-            match value {
-                Some(v) => {
-                    self.validation_obj.value_num = v;
-                    self.validation_obj.ok = self.validation_obj.value_num > -1 as f64;
-                    self
-                },
-                None => {
-                    self.validation_obj.value_string = "Unspecified value!".to_string();
-                    self.validation_obj.ok = false;
-                    self
-                }
-            }
-
-        }
-
-        pub fn message(&mut self, value: String) -> &mut Self {
-            self.validation_obj.message = value;
+        pub fn message(&mut self, value: &'a str) -> &mut Self {
+            self.err.message = value;
             self
         }
 
-        pub fn title(&mut self, value: String) -> &mut Self {
-            self.validation_obj.title = value;
+        pub fn title(&mut self, value: &'a str) -> &mut Self {
+            self.err.title = value;
             self
         }
 
         pub fn build(&mut self)  {
-
-            if !self.validation_obj.ok {
-
-                self.validation_result.obj_vec.push(self.validation_obj.clone())
+            if !self.err.ok {
+                self.err_vec.push(self.err.clone())
             }
         }
 
         pub fn has_error(&self) ->bool  {
-
-            self.validation_result.obj_vec.len() > 0
-
+            self.err_vec.len() > 0
         }
 
         pub fn errors(&self) ->Vec<Error>  {
-
-            self.validation_result.obj_vec.clone()
-
+            self.err_vec.clone()
         }
 
         pub fn errors_to_string(&self) -> String {
-
             serde_json::to_string(&self.errors()).unwrap_or_default()
-
-
         }
     }
+
+    impl fmt::Display for dyn ObjectTrait {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self)
+        }
+    }
+
+    impl Debug for dyn ObjectTrait {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self)
+        }
+    }
+
+    impl ObjectTrait for String{
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+    }
+
+    impl AddRequire<String> for Validator<'_> {
+        fn require(&mut self, v: String) -> &mut Self {
+            self.err = Error::new();
+            if v.is_empty() {
+                self.err.value = Box::new(v.clone());
+                self.err.check_ok();
+            }
+            self
+        }
+    }
+
+    impl AddRequire<Option<String>> for Validator<'_> {
+        fn require(&mut self, v: Option<String>) -> &mut Self {
+            self.err = Error::new();
+
+            match v {
+                Some(d) => {
+                    if d.is_empty() {
+                        self.err.value = Box::new(d.clone());
+                        self.err.check_ok();
+                    }else{
+                        let s = "";
+                    }
+                }
+                None => {
+                    self.err.value = Box::new("Unspecified value!".to_string());
+                    self.err.ok = false;
+                }
+            }
+
+            self
+        }
+    }
+
 }
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::validation::{AddRequire, Validator};
 
     #[test]
     fn require_string() {
 
-        let test_value = Some("".to_string());
+        let mut test_value:Option<String> = Some("".to_string());
+        test_value = None;
 
-        let mut validator = validation::Validator::new();
-        validator.require_opt(test_value).title("value".into()).message("the value is mandatory".to_string()).build();
+        let mut validator = Validator::new();
+        validator.require("".to_string()).message("the string is mandatory").title("string without option").build();
+        validator.require(test_value).message("the string is mandatory").title("string with option").build();
 
-        assert!(validator.has_error())
-    }
 
-    #[test]
-    fn email_string_opt() {
-        let mut validator = validation::Validator::new();
-        validator.email_string_opt(Some("test@test.".into())).title("email".into()).message("invalid email address".to_string()).build();
+        let ff = "";
 
-        assert!(validator.has_error())
+        if validator.has_error() {
 
-    }
+            println!("{}",validator.errors_to_string())
+        }
 
-    #[test]
-    fn min_max_string_opt() {
-        let mut validator = validation::Validator::new();
-        validator.min_string_opt(Some("test".into()) , 8).title("min".into()).message("value must be longer than 8 characters".to_string()).build();
-        validator.max_string_opt(Some("test_test".into()) , 50).title("max".into()).message("value must be less than 50 characters".to_string()).build();
-        assert!(validator.has_error())
+
     }
 }
