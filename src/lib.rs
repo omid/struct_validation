@@ -1,16 +1,10 @@
 
-#[macro_use]
-extern crate lazy_static;
-
 
 pub mod validation {
     use serde::{Serialize, Serializer};
-    use serde::Deserialize;
     use serde_json;
-    use regex::{Regex};
     use std::any::Any;
-    use serde::ser::SerializeStruct;
-    use std::fmt::{Debug, Formatter, Display};
+    use std::fmt::{Debug, Formatter};
     use dyn_clone::DynClone;
     use std::fmt;
 
@@ -21,6 +15,7 @@ pub mod validation {
     }
     pub trait AddRequire<T>{
         fn require(&mut self , v : T) -> &mut Self;
+        fn build(&mut self , v : T);
     }
 
     #[derive( Debug , Serialize , Clone)]
@@ -37,219 +32,6 @@ pub mod validation {
     }
 
     impl Error<'_>{
-        fn check_ok(&mut self){
-            match self.value.as_any().downcast_ref::<String>() {
-                Some(d) => {
-                    if d.is_empty() {
-                        self.ok = false
-                    }else{
-                        self.ok = true
-                    }
-                }
-                None => {
-
-                    match self.value.as_any().downcast_ref::<i8>() {
-                        Some(d) => {
-                            if *d > 0 {
-                                self.ok = false
-                            }else{
-                                self.ok = true
-                            }
-                        }
-                        None => {
-
-                            match self.value.as_any().downcast_ref::<i16>() {
-                                Some(d) => {
-                                    if *d > 0 {
-                                        self.ok = false
-                                    }else{
-                                        self.ok = true
-                                    }
-                                }
-                                None => {
-
-                                    match self.value.as_any().downcast_ref::<i32>() {
-                                        Some(d) => {
-                                            if *d > 0 {
-                                                self.ok = false
-                                            }else{
-                                                self.ok = true
-                                            }
-                                        }
-                                        None => {
-
-                                            match self.value.as_any().downcast_ref::<i64>() {
-                                                Some(d) => {
-                                                    if *d > 0 {
-                                                        self.ok = false
-                                                    }else{
-                                                        self.ok = true
-                                                    }
-                                                }
-                                                None => {
-
-                                                    match self.value.as_any().downcast_ref::<i128>() {
-                                                        Some(d) => {
-                                                            if *d > 0 {
-                                                                self.ok = false
-                                                            }else{
-                                                                self.ok = true
-                                                            }
-                                                        }
-                                                        None => {
-
-                                                            match self.value.as_any().downcast_ref::<isize>() {
-                                                                Some(d) => {
-                                                                    if *d > 0 {
-                                                                        self.ok = false
-                                                                    }else{
-                                                                        self.ok = true
-                                                                    }
-                                                                }
-                                                                None => {
-
-
-                                                                    match self.value.as_any().downcast_ref::<u8>() {
-                                                                        Some(d) => {
-                                                                            if *d > 0 {
-                                                                                self.ok = false
-                                                                            }else{
-                                                                                self.ok = true
-                                                                            }
-                                                                        }
-                                                                        None => {
-
-
-                                                                            match self.value.as_any().downcast_ref::<u16>() {
-                                                                                Some(d) => {
-                                                                                    if *d > 0 {
-                                                                                        self.ok = false
-                                                                                    }else{
-                                                                                        self.ok = true
-                                                                                    }
-                                                                                }
-                                                                                None => {
-
-                                                                                    match self.value.as_any().downcast_ref::<u32>() {
-                                                                                        Some(d) => {
-                                                                                            if *d > 0 {
-                                                                                                self.ok = false
-                                                                                            }else{
-                                                                                                self.ok = true
-                                                                                            }
-                                                                                        }
-                                                                                        None => {
-
-                                                                                            match self.value.as_any().downcast_ref::<u64>() {
-                                                                                                Some(d) => {
-                                                                                                    if *d > 0 {
-                                                                                                        self.ok = false
-                                                                                                    }else{
-                                                                                                        self.ok = true
-                                                                                                    }
-                                                                                                }
-                                                                                                None => {
-
-                                                                                                    match self.value.as_any().downcast_ref::<u128>() {
-                                                                                                        Some(d) => {
-                                                                                                            if *d > 0 {
-                                                                                                                self.ok = false
-                                                                                                            }else{
-                                                                                                                self.ok = true
-                                                                                                            }
-                                                                                                        }
-                                                                                                        None => {
-
-                                                                                                            match self.value.as_any().downcast_ref::<usize>() {
-                                                                                                                Some(d) => {
-                                                                                                                    if *d > 0 {
-                                                                                                                        self.ok = false
-                                                                                                                    }else{
-                                                                                                                        self.ok = true
-                                                                                                                    }
-                                                                                                                }
-                                                                                                                None => {
-
-
-                                                                                                                    match self.value.as_any().downcast_ref::<f32>() {
-                                                                                                                        Some(d) => {
-                                                                                                                            if *d > 0 as f32 {
-                                                                                                                                self.ok = false
-                                                                                                                            }else{
-                                                                                                                                self.ok = true
-                                                                                                                            }
-                                                                                                                        }
-                                                                                                                        None => {
-
-
-                                                                                                                            match self.value.as_any().downcast_ref::<f64>() {
-                                                                                                                                Some(d) => {
-                                                                                                                                    if *d > 0 as f64 {
-                                                                                                                                        self.ok = false
-                                                                                                                                    }else{
-                                                                                                                                        self.ok = true
-                                                                                                                                    }
-                                                                                                                                }
-                                                                                                                                None => {
-
-                                                                                                                                    self.ok = false
-
-
-                                                                                                                                }
-                                                                                                                            }
-
-                                                                                                                        }
-                                                                                                                    }
-
-                                                                                                                }
-                                                                                                            }
-
-
-                                                                                                        }
-                                                                                                    }
-
-
-                                                                                                }
-                                                                                            }
-
-
-                                                                                        }
-                                                                                    }
-
-
-                                                                                }
-                                                                            }
-
-                                                                        }
-                                                                    }
-
-                                                                }
-                                                            }
-
-
-                                                        }
-                                                    }
-
-
-                                                }
-                                            }
-
-
-                                        }
-                                    }
-
-
-                                }
-                            }
-
-
-                        }
-                    }
-
-
-                }
-            }
-        }
 
         fn new()-> Self{
             Self{
@@ -265,7 +47,7 @@ pub mod validation {
     impl Serialize for dyn ObjectTrait {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
             where S: Serializer {
-            let mut s;
+            let  s;
 
             match self.as_any().downcast_ref::<String>()  {
                 Some(d) => {
@@ -398,12 +180,6 @@ pub mod validation {
             self
         }
 
-        pub fn build(&mut self)  {
-            if !self.err.ok {
-                self.err_vec.push(self.err.clone())
-            }
-        }
-
         pub fn has_error(&self) ->bool  {
             self.err_vec.len() > 0
         }
@@ -436,14 +212,64 @@ pub mod validation {
 
     }
 
+    impl ObjectTrait for i8{
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+    }
+
+    impl ObjectTrait for i16{
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+    }
+
+    impl ObjectTrait for i32{
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+    }
+
+    impl ObjectTrait for i64{
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+    }
+
+    impl ObjectTrait for i128{
+        fn as_any(&self) -> &dyn Any {
+            self
+        }
+
+    }
+
+
     impl AddRequire<String> for Validator<'_> {
         fn require(&mut self, v: String) -> &mut Self {
             self.err = Error::new();
-            if v.is_empty() {
-                self.err.value = Box::new(v.clone());
-                self.err.check_ok();
-            }
+            self.err.value = Box::new(v.clone());
             self
+        }
+
+        fn build(&mut self, v: String) {
+            match self.err.value.as_any().downcast_ref::<String>() {
+                Some(d) => {
+                    if *d != v {
+                        // self.err.value = Box::new(v.clone());
+                        self.err.ok = false;
+                        self.err_vec.push(self.err.clone());
+                    }
+                }
+                None => {
+                    self.err.value = Box::new("invalid type".to_string());
+                    self.err.ok = false;
+                    self.err_vec.push(self.err.clone());
+                }
+            }
         }
     }
 
@@ -452,21 +278,105 @@ pub mod validation {
             self.err = Error::new();
 
             match v {
-                Some(d) => {
-                    if d.is_empty() {
-                        self.err.value = Box::new(d.clone());
-                        self.err.check_ok();
-                    }else{
-                        let s = "";
-                    }
+                Some(vv) => {
+                    self.err.value = Box::new(vv.clone());
                 }
-                None => {
-                    self.err.value = Box::new("Unspecified value!".to_string());
-                    self.err.ok = false;
-                }
+                None => {}
             }
 
             self
+        }
+
+        fn build(&mut self, v: Option<String>) {
+            match self.err.value.as_any().downcast_ref::<String>() {
+                Some(d) => {
+
+                    match v {
+                        Some(vv) => {
+                            if vv != *d {
+                                // self.err.value = Box::new(vv.clone());
+                                self.err.ok = false;
+                                self.err_vec.push(self.err.clone());
+                            }
+                        }
+                        None => {}
+                    }
+
+
+                }
+                None => {
+                    self.err.value = Box::new("invalid type".to_string());
+                    self.err.ok = false;
+                    self.err_vec.push(self.err.clone());
+                }
+            }
+        }
+    }
+
+    impl AddRequire<i8> for Validator<'_> {
+        fn require(&mut self, v: i8) -> &mut Self {
+            self.err = Error::new();
+            self.err.value = Box::new(v.clone());
+            self
+        }
+
+        fn build(&mut self, v: i8) {
+            match self.err.value.as_any().downcast_ref::<i8>() {
+                Some(d) => {
+                    if *d != v {
+                        // self.err.value = Box::new(v.clone());
+                        self.err.ok = false;
+                        self.err_vec.push(self.err.clone());
+                    }
+                }
+                None => {
+                    self.err.value = Box::new("invalid type".to_string());
+                    self.err.ok = false;
+                    self.err_vec.push(self.err.clone());
+                }
+            }
+        }
+    }
+
+    impl AddRequire<Option<i8>> for Validator<'_> {
+        fn require(&mut self, v: Option<i8>) -> &mut Self {
+            self.err = Error::new();
+
+            match v {
+                Some(vv) => {
+                    self.err.value = Box::new(vv.clone());
+                }
+                None => {}
+            }
+
+            self
+        }
+
+        fn build(&mut self, v: Option<i8>) {
+            match self.err.value.as_any().downcast_ref::<i8>() {
+                Some(d) => {
+
+                    match v {
+                        Some(vv) => {
+                            if vv != *d {
+                                // self.err.value = Box::new(vv.clone());
+                                self.err.ok = false;
+                                self.err_vec.push(self.err.clone());
+                            }
+                        }
+                        None => {}
+                    }
+
+
+                }
+                None => {
+
+                    self.err.value = Box::new("invalid type".to_string());
+                    self.err.ok = false;
+                    self.err_vec.push(self.err.clone());
+
+                }
+            }
         }
     }
 
@@ -475,21 +385,20 @@ pub mod validation {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::validation::{AddRequire, Validator};
 
     #[test]
     fn require_string() {
 
-        let mut test_value:Option<String> = Some("".to_string());
-        test_value = None;
+        let opt_value_string_1:Option<String> = Some("x".to_string());
+        let opt_value_string_2:Option<String> = Some("x2".to_string());
+        let opt_value_i8_1:Option<i8> = Some(8);
+        let opt_value_i8_2:Option<i8> = Some(9);
 
         let mut validator = Validator::new();
-        validator.require("".to_string()).message("the string is mandatory").title("string without option").build();
-        validator.require(test_value).message("the string is mandatory").title("string with option").build();
-
-
-        let ff = "";
+        validator.require("are".to_string()).message("the string is mandatory").title("string without option").build("ar".to_string());
+        validator.require(opt_value_string_1).message("the string is mandatory").title("string with option").build(opt_value_string_2);
+        validator.require(opt_value_i8_1).message("the string is mandatory").title("string with option").build(opt_value_i8_2);
 
         if validator.has_error() {
 
