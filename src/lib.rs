@@ -1,24 +1,22 @@
-
-
 pub mod validation {
+    use dyn_clone::DynClone;
     use serde::{Serialize, Serializer};
     use serde_json;
     use std::any::Any;
-    use std::fmt::{Debug, Formatter};
-    use dyn_clone::DynClone;
     use std::fmt;
+    use std::fmt::{Debug, Formatter};
 
     dyn_clone::clone_trait_object!(ObjectTrait);
 
-    trait ObjectTrait: Any + DynClone{
+    trait ObjectTrait: Any + DynClone {
         fn as_any(&self) -> &dyn Any;
     }
-    pub trait AddRequire<T>{
-        fn require(&mut self , v : T) -> &mut Self;
-        fn build(&mut self , v : T);
+    pub trait AddRequire<T> {
+        fn require(&mut self, v: T) -> &mut Self;
+        fn build(&mut self, v: T);
     }
 
-    #[derive( Debug , Serialize , Clone)]
+    #[derive(Debug, Serialize, Clone)]
     pub struct Error<'a> {
         title: &'a str,
         message: &'a str,
@@ -28,146 +26,62 @@ pub mod validation {
 
     pub struct Validator<'a> {
         err_vec: Vec<Error<'a>>,
-        err : Error<'a>
+        err: Error<'a>,
     }
 
-    impl Error<'_>{
-
-        fn new()-> Self{
-            Self{
+    impl Error<'_> {
+        fn new() -> Self {
+            Self {
                 title: "",
                 message: "",
                 value: Box::new("".to_string()),
-                ok: true
+                ok: true,
             }
         }
-
     }
 
     impl Serialize for dyn ObjectTrait {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where S: Serializer {
-            let  s;
-
-            match self.as_any().downcast_ref::<String>()  {
-                Some(d) => {
-                    s = serializer.serialize_str(d)
-                }
-                None => {
-
-                    match self.as_any().downcast_ref::<i8>() {
-                        Some(d) => {
-                            s = serializer.serialize_i8(*d)
-                        }
-                        None => {
-
-                            match self.as_any().downcast_ref::<i16>() {
-                                Some(d) => {
-                                    s = serializer.serialize_i16(*d)
-                                }
-                                None => {
-
-                                    match self.as_any().downcast_ref::<i32>() {
-                                        Some(d) => {
-                                            s = serializer.serialize_i32(*d)
-                                        }
-                                        None => {
-
-                                            match self.as_any().downcast_ref::<i64>() {
-                                                Some(d) => {
-                                                    s = serializer.serialize_i64(*d)
-                                                }
-                                                None => {
-
-                                                    match self.as_any().downcast_ref::<u8>() {
-                                                        Some(d) => {
-                                                            s = serializer.serialize_u8(*d)
-                                                        }
-                                                        None => {
-
-                                                            match self.as_any().downcast_ref::<u16>() {
-                                                                Some(d) => {
-                                                                    s = serializer.serialize_u16(*d)
-                                                                }
-                                                                None => {
-
-
-                                                                    match self.as_any().downcast_ref::<u32>()  {
-                                                                        Some(d) => {
-                                                                            s = serializer.serialize_u32(*d)
-                                                                        }
-                                                                        None => {
-
-
-                                                                            match self.as_any().downcast_ref::<u64>()  {
-                                                                                Some(d) => {
-                                                                                    s = serializer.serialize_u64(*d)
-                                                                                }
-                                                                                None => {
-
-                                                                                    match self.as_any().downcast_ref::<f32>() {
-                                                                                        Some(d) => {
-                                                                                            s = serializer.serialize_f32(*d)
-                                                                                        }
-                                                                                        None => {
-
-                                                                                            match self.as_any().downcast_ref::<f64>() {
-                                                                                                Some(d) => {
-                                                                                                    s = serializer.serialize_f64(*d)
-                                                                                                }
-                                                                                                None => {
-
-                                                                                                    s = serializer.serialize_str("cant serialize!!!")
-
-
-                                                                                                }
-                                                                                            }
-
-
-                                                                                        }
-                                                                                    }
-
-
-                                                                                }
-                                                                            }
-
-                                                                        }
-                                                                    }
-
-                                                                }
-                                                            }
-
-
-                                                        }
-                                                    }
-
-
-                                                }
-                                            }
-
-
-                                        }
-                                    }
-
-
-                                }
-                            }
-
-
-                        }
-                    }
-
-
-                }
+        where
+            S: Serializer,
+        {
+            let s;
+            if let Some(d) = self.as_any().downcast_ref::<String>() {
+                s = serializer.serialize_str(d)
+            } else if let Some(d) = self.as_any().downcast_ref::<i8>() {
+                s = serializer.serialize_i8(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<i16>() {
+                s = serializer.serialize_i16(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<i32>() {
+                s = serializer.serialize_i32(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<i64>() {
+                s = serializer.serialize_i64(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<u8>() {
+                s = serializer.serialize_u8(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<u16>() {
+                s = serializer.serialize_u16(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<u32>() {
+                s = serializer.serialize_u32(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<u64>() {
+                s = serializer.serialize_u64(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<f32>() {
+                s = serializer.serialize_f32(*d)
+            } else if let Some(d) = self.as_any().downcast_ref::<f64>() {
+                s = serializer.serialize_f64(*d)
+            } else {
+                s = serializer.serialize_str("cant serialize!!!")
             }
 
             s
         }
     }
 
-    impl<'a> Validator<'a>{
+    impl<'a> Validator<'a> {
         pub fn new() -> Self {
-            Validator { err_vec: vec![], err : Error::new() }
+            Validator {
+                err_vec: Vec::new(),
+                err: Error::new(),
+            }
         }
 
         pub fn message(&mut self, value: &'a str) -> &mut Self {
@@ -180,11 +94,11 @@ pub mod validation {
             self
         }
 
-        pub fn has_error(&self) ->bool  {
+        pub fn has_error(&self) -> bool {
             self.err_vec.len() > 0
         }
 
-        pub fn errors(&self) ->Vec<Error>  {
+        pub fn errors(&self) -> Vec<Error> {
             self.err_vec.clone()
         }
 
@@ -205,97 +119,83 @@ pub mod validation {
         }
     }
 
-    impl ObjectTrait for String{
+    impl ObjectTrait for String {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for i8{
+    impl ObjectTrait for i8 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for i16{
+    impl ObjectTrait for i16 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for i32{
+    impl ObjectTrait for i32 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for i64{
+    impl ObjectTrait for i64 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for i128{
+    impl ObjectTrait for i128 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for u8{
+    impl ObjectTrait for u8 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for u16{
+    impl ObjectTrait for u16 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for u32{
+    impl ObjectTrait for u32 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for u64{
+    impl ObjectTrait for u64 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for u128{
+    impl ObjectTrait for u128 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for f32{
+    impl ObjectTrait for f32 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
 
-    impl ObjectTrait for f64{
+    impl ObjectTrait for f64 {
         fn as_any(&self) -> &dyn Any {
             self
         }
-
     }
-
 
     impl AddRequire<String> for Validator<'_> {
         fn require(&mut self, v: String) -> &mut Self {
@@ -338,20 +238,15 @@ pub mod validation {
 
         fn build(&mut self, v: Option<String>) {
             match self.err.value.as_any().downcast_ref::<String>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
@@ -401,26 +296,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<i8>) {
             match self.err.value.as_any().downcast_ref::<i8>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -466,26 +354,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<i16>) {
             match self.err.value.as_any().downcast_ref::<i16>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -531,26 +412,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<i32>) {
             match self.err.value.as_any().downcast_ref::<i32>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -596,26 +470,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<i64>) {
             match self.err.value.as_any().downcast_ref::<i64>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -661,26 +528,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<i128>) {
             match self.err.value.as_any().downcast_ref::<i128>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -726,26 +586,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<u8>) {
             match self.err.value.as_any().downcast_ref::<u8>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -791,26 +644,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<u16>) {
             match self.err.value.as_any().downcast_ref::<u16>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -856,26 +702,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<u32>) {
             match self.err.value.as_any().downcast_ref::<u32>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -921,26 +760,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<u64>) {
             match self.err.value.as_any().downcast_ref::<u64>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -986,26 +818,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<u128>) {
             match self.err.value.as_any().downcast_ref::<u128>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -1051,26 +876,19 @@ pub mod validation {
 
         fn build(&mut self, v: Option<f32>) {
             match self.err.value.as_any().downcast_ref::<f32>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
@@ -1116,33 +934,24 @@ pub mod validation {
 
         fn build(&mut self, v: Option<f64>) {
             match self.err.value.as_any().downcast_ref::<f64>() {
-                Some(d) => {
-
-                    match v {
-                        Some(vv) => {
-                            if vv != *d {
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
+                Some(d) => match v {
+                    Some(vv) => {
+                        if vv != *d {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
-                        None => {}
                     }
-
-
-                }
+                    None => {}
+                },
                 None => {
-
                     self.err.value = Box::new("invalid type".to_string());
                     self.err.ok = false;
                     self.err_vec.push(self.err.clone());
-
                 }
             }
         }
     }
-
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -1150,22 +959,32 @@ mod tests {
 
     #[test]
     fn require_string() {
-
-        let opt_value_string_1:Option<String> = Some("x".to_string());
-        let opt_value_string_2:Option<String> = Some("x2".to_string());
-        let opt_value_i8_1:Option<i8> = Some(8);
-        let opt_value_i8_2:Option<i8> = Some(9);
+        let opt_value_string_1: Option<String> = Some("x".to_string());
+        let opt_value_string_2: Option<String> = Some("x2".to_string());
+        let opt_value_i8_1: Option<i8> = Some(8);
+        let opt_value_i8_2: Option<i8> = Some(9);
 
         let mut validator = Validator::new();
-        validator.require("are".to_string()).message("the string is mandatory").title("string without option").build("ar".to_string());
-        validator.require(opt_value_string_1).message("the string is mandatory").title("string with option").build(opt_value_string_2);
-        validator.require(opt_value_i8_1).message("the string is mandatory").title("string with option").build(opt_value_i8_2);
+        validator
+            .require("are".to_string())
+            .message("the string is mandatory")
+            .title("string without option")
+            .build("ar".to_string());
+        validator
+            .require(opt_value_string_1)
+            .message("the string is mandatory")
+            .title("string with option")
+            .build(opt_value_string_2);
+        validator
+            .require(opt_value_i8_1)
+            .message("the string is mandatory")
+            .title("string with option")
+            .build(opt_value_i8_2);
 
         if validator.has_error() {
-
-            println!("{}",validator.errors_to_string())
+            println!("{}", validator.errors_to_string()) // [{"title":"string without option","message":"the string is mandatory","value":"are","ok":false},{"title":"string with option","message":"the string is mandatory","value":"x","ok":false},{"title":"string with option","message":"the string is mandatory","value":8,"ok":false}]
         }
 
-
+        assert_eq!(validator.has_error(), true)
     }
 }
