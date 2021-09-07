@@ -16,11 +16,73 @@ pub mod validation {
                         self
                     }
                 }
+
+                impl AddRequire<Option<$t>> for Validator<'_> {
+                    fn require(&mut self, v: Option<$t>) -> &mut Self {
+                        self.err = Error::new();
+
+                        match v {
+                            Some(vv) => {
+                                self.err.value = Box::new(vv.clone());
+                            }
+                            None => {}
+                        }
+
+                        self
+                    }
+
+                    fn build(&mut self, v: Option<$t>) {
+                        match self.err.value.as_any().downcast_ref::<$t>() {
+                            Some(d) => match v {
+                                Some(vv) => {
+                                    if vv != *d {
+                                        self.err.ok = false;
+                                        self.err_vec.push(self.err.clone());
+                                    }
+                                }
+                                None => {}
+                            },
+                            None => {
+                                self.err.value = Box::new("invalid type".to_string());
+                                self.err.ok = false;
+                                self.err_vec.push(self.err.clone());
+                            }
+                        }
+                    }
+
+                }
+
+
+            impl AddRequire<$t> for Validator<'_> {
+            fn require(&mut self, v: $t) -> &mut Self {
+                self.err = Error::new();
+                self.err.value = Box::new(v.clone());
+                self
+            }
+
+            fn build(&mut self, v: $t) {
+                match self.err.value.as_any().downcast_ref::<$t>() {
+                    Some(d) => {
+                        if *d != v {
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
+                        }
+                    }
+                    None => {
+                        self.err.value = Box::new("invalid type".to_string());
+                        self.err.ok = false;
+                        self.err_vec.push(self.err.clone());
+                    }
+                }
+            }
+        }
+
+
             )*
     };
 }
 
-    obj_trait!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, f32, f64);
+    obj_trait!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, f32, f64, String);
 
     trait ObjectTrait: Any + DynClone {
         fn as_any(&self) -> &dyn Any;
@@ -132,767 +194,6 @@ pub mod validation {
             write!(f, "{}", self)
         }
     }
-
-    impl ObjectTrait for String {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl AddRequire<String> for Validator<'_> {
-        fn require(&mut self, v: String) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: String) {
-            match self.err.value.as_any().downcast_ref::<String>() {
-                Some(d) => {
-                    if *d != v {
-                        // self.err.value = Box::new(v.clone());
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<String>> for Validator<'_> {
-        fn require(&mut self, v: Option<String>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<String>) {
-            match self.err.value.as_any().downcast_ref::<String>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<i8> for Validator<'_> {
-        fn require(&mut self, v: i8) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: i8) {
-            match self.err.value.as_any().downcast_ref::<i8>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<i8>> for Validator<'_> {
-        fn require(&mut self, v: Option<i8>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<i8>) {
-            match self.err.value.as_any().downcast_ref::<i8>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<i16> for Validator<'_> {
-        fn require(&mut self, v: i16) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: i16) {
-            match self.err.value.as_any().downcast_ref::<i16>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<i16>> for Validator<'_> {
-        fn require(&mut self, v: Option<i16>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<i16>) {
-            match self.err.value.as_any().downcast_ref::<i16>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<i32> for Validator<'_> {
-        fn require(&mut self, v: i32) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: i32) {
-            match self.err.value.as_any().downcast_ref::<i32>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<i32>> for Validator<'_> {
-        fn require(&mut self, v: Option<i32>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<i32>) {
-            match self.err.value.as_any().downcast_ref::<i32>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<i64> for Validator<'_> {
-        fn require(&mut self, v: i64) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: i64) {
-            match self.err.value.as_any().downcast_ref::<i64>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<i64>> for Validator<'_> {
-        fn require(&mut self, v: Option<i64>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<i64>) {
-            match self.err.value.as_any().downcast_ref::<i64>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<i128> for Validator<'_> {
-        fn require(&mut self, v: i128) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: i128) {
-            match self.err.value.as_any().downcast_ref::<i128>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<i128>> for Validator<'_> {
-        fn require(&mut self, v: Option<i128>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<i128>) {
-            match self.err.value.as_any().downcast_ref::<i128>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<u8> for Validator<'_> {
-        fn require(&mut self, v: u8) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: u8) {
-            match self.err.value.as_any().downcast_ref::<u8>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<u8>> for Validator<'_> {
-        fn require(&mut self, v: Option<u8>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<u8>) {
-            match self.err.value.as_any().downcast_ref::<u8>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<u16> for Validator<'_> {
-        fn require(&mut self, v: u16) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: u16) {
-            match self.err.value.as_any().downcast_ref::<u16>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<u16>> for Validator<'_> {
-        fn require(&mut self, v: Option<u16>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<u16>) {
-            match self.err.value.as_any().downcast_ref::<u16>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<u32> for Validator<'_> {
-        fn require(&mut self, v: u32) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: u32) {
-            match self.err.value.as_any().downcast_ref::<u32>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<u32>> for Validator<'_> {
-        fn require(&mut self, v: Option<u32>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<u32>) {
-            match self.err.value.as_any().downcast_ref::<u32>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<u64> for Validator<'_> {
-        fn require(&mut self, v: u64) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: u64) {
-            match self.err.value.as_any().downcast_ref::<u64>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<u64>> for Validator<'_> {
-        fn require(&mut self, v: Option<u64>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<u64>) {
-            match self.err.value.as_any().downcast_ref::<u64>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<u128> for Validator<'_> {
-        fn require(&mut self, v: u128) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: u128) {
-            match self.err.value.as_any().downcast_ref::<u128>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<u128>> for Validator<'_> {
-        fn require(&mut self, v: Option<u128>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<u128>) {
-            match self.err.value.as_any().downcast_ref::<u128>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<f32> for Validator<'_> {
-        fn require(&mut self, v: f32) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: f32) {
-            match self.err.value.as_any().downcast_ref::<f32>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<f32>> for Validator<'_> {
-        fn require(&mut self, v: Option<f32>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<f32>) {
-            match self.err.value.as_any().downcast_ref::<f32>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<f64> for Validator<'_> {
-        fn require(&mut self, v: f64) -> &mut Self {
-            self.err = Error::new();
-            self.err.value = Box::new(v.clone());
-            self
-        }
-
-        fn build(&mut self, v: f64) {
-            match self.err.value.as_any().downcast_ref::<f64>() {
-                Some(d) => {
-                    if *d != v {
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
-
-    impl AddRequire<Option<f64>> for Validator<'_> {
-        fn require(&mut self, v: Option<f64>) -> &mut Self {
-            self.err = Error::new();
-
-            match v {
-                Some(vv) => {
-                    self.err.value = Box::new(vv.clone());
-                }
-                None => {}
-            }
-
-            self
-        }
-
-        fn build(&mut self, v: Option<f64>) {
-            match self.err.value.as_any().downcast_ref::<f64>() {
-                Some(d) => match v {
-                    Some(vv) => {
-                        if vv != *d {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {}
-                },
-                None => {
-                    self.err.value = Box::new("invalid type".to_string());
-                    self.err.ok = false;
-                    self.err_vec.push(self.err.clone());
-                }
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -909,7 +210,7 @@ mod tests {
         let mut validator = Validator::new();
         validator
             .require("are".to_string()) // data ye ke user vared karde
-            .message("the string is mandatory")// paygami ke agar data match nabashe namyesh bede
+            .message("the string is mandatory") // paygami ke agar data match nabashe namyesh bede
             .title("string without option") // title paygham
             .build("ar".to_string()); // data morede entezar ke alan match nist ba require
         validator
