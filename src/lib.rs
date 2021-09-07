@@ -8,6 +8,20 @@ pub mod validation {
 
     dyn_clone::clone_trait_object!(ObjectTrait);
 
+    macro_rules! obj_trait {
+    ( $( $t:ident ),* ) => {
+            $(
+                impl ObjectTrait for $t {
+                    fn as_any(&self) -> &dyn Any {
+                        self
+                    }
+                }
+            )*
+    };
+}
+
+    obj_trait!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, f32, f64);
+
     trait ObjectTrait: Any + DynClone {
         fn as_any(&self) -> &dyn Any;
     }
@@ -120,78 +134,6 @@ pub mod validation {
     }
 
     impl ObjectTrait for String {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for i8 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for i16 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for i32 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for i64 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for i128 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for u8 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for u16 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for u32 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for u64 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for u128 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for f32 {
-        fn as_any(&self) -> &dyn Any {
-            self
-        }
-    }
-
-    impl ObjectTrait for f64 {
         fn as_any(&self) -> &dyn Any {
             self
         }
@@ -966,10 +908,10 @@ mod tests {
 
         let mut validator = Validator::new();
         validator
-            .require("are".to_string())
-            .message("the string is mandatory")
-            .title("string without option")
-            .build("ar".to_string());
+            .require("are".to_string()) // data ye ke user vared karde
+            .message("the string is mandatory")// paygami ke agar data match nabashe namyesh bede
+            .title("string without option") // title paygham
+            .build("ar".to_string()); // data morede entezar ke alan match nist ba require
         validator
             .require(opt_value_string_1)
             .message("the string is mandatory")
