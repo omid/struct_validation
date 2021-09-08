@@ -21,32 +21,26 @@ pub mod validation {
                     fn require(&mut self, v: Option<$t>) -> &mut Self {
                         self.err = Error::new();
 
-                        match v {
-                            Some(vv) => {
-                                self.err.value = Box::new(vv.clone());
-                            }
-                            None => {}
+                        if let Some(vv) = v{
+                            self.err.value = Box::new(vv.clone());
                         }
 
                         self
                     }
 
                     fn build(&mut self, v: Option<$t>) {
-                        match self.err.value.as_any().downcast_ref::<$t>() {
-                            Some(d) => match v {
-                                Some(vv) => {
-                                    if vv != *d {
+
+                        if let Some(d) = self.err.value.as_any().downcast_ref::<$t>(){
+                            if let Some(vv) = v{
+                                if vv != *d {
                                         self.err.ok = false;
                                         self.err_vec.push(self.err.clone());
                                     }
-                                }
-                                None => {}
-                            },
-                            None => {
-                                self.err.value = Box::new("invalid type".to_string());
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
                             }
+                        }else{
+                            self.err.value = Box::new("invalid type".to_string());
+                            self.err.ok = false;
+                            self.err_vec.push(self.err.clone());
                         }
                     }
 
@@ -61,19 +55,17 @@ pub mod validation {
             }
 
             fn build(&mut self, v: $t) {
-                match self.err.value.as_any().downcast_ref::<$t>() {
-                    Some(d) => {
-                        if *d != v {
+                if let Some(d) = self.err.value.as_any().downcast_ref::<$t>(){
+                    if *d != v {
                             self.err.ok = false;
                             self.err_vec.push(self.err.clone());
                         }
-                    }
-                    None => {
-                        self.err.value = Box::new("invalid type".to_string());
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
+                }else{
+                    self.err.value = Box::new("invalid type".to_string());
+                    self.err.ok = false;
+                    self.err_vec.push(self.err.clone());
                 }
+
             }
         }
 
