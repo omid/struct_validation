@@ -1,233 +1,177 @@
 pub mod validation {
-    use dyn_clone::DynClone;
-    use serde::{Serialize, Serializer};
+    use serde::Serialize;
     use serde_json;
-    use std::any::Any;
-    use std::fmt;
-    use std::fmt::{Debug, Formatter};
+    use std::fmt::Debug;
 
-    dyn_clone::clone_trait_object!(ObjectTrait);
-
-    macro_rules! obj_trait {
-    ( $( $t:ident ),* ) => {
-            $(
-                impl ObjectTrait for $t {
-                    fn as_any(&self) -> &dyn Any {
-                        self
-                    }
-                }
-
-                impl AddRequire<Option<$t>> for Validator<'_> {
-                    fn require(&mut self, v: Option<$t>) -> &mut Self {
-                        self.err = Error::new();
-
-                        match v {
-                            Some(vv) => {
-                                self.err.value = Box::new(vv.clone());
-                            }
-                            None => {}
-                        }
-
-                        self
-                    }
-
-                    fn build(&mut self, v: Option<$t>) {
-                        match self.err.value.as_any().downcast_ref::<$t>() {
-                            Some(d) => match v {
-                                Some(vv) => {
-                                    if vv != *d {
-                                        self.err.ok = false;
-                                        self.err_vec.push(self.err.clone());
-                                    }
-                                }
-                                None => {}
-                            },
-                            None => {
-                                self.err.value = Box::new("invalid type".to_string());
-                                self.err.ok = false;
-                                self.err_vec.push(self.err.clone());
-                            }
-                        }
-                    }
-
-                }
-
-
-            impl AddRequire<$t> for Validator<'_> {
-            fn require(&mut self, v: $t) -> &mut Self {
-                self.err = Error::new();
-                self.err.value = Box::new(v.clone());
-                self
-            }
-
-            fn build(&mut self, v: $t) {
-                match self.err.value.as_any().downcast_ref::<$t>() {
-                    Some(d) => {
-                        if *d != v {
-                            self.err.ok = false;
-                            self.err_vec.push(self.err.clone());
-                        }
-                    }
-                    None => {
-                        self.err.value = Box::new("invalid type".to_string());
-                        self.err.ok = false;
-                        self.err_vec.push(self.err.clone());
-                    }
-                }
-            }
-        }
-
-
-            )*
-    };
-}
-
-    obj_trait!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, f32, f64, String);
-
-    trait ObjectTrait: Any + DynClone {
-        fn as_any(&self) -> &dyn Any;
+    pub enum ConstraintType {
+        Required,
+        MinRange(i64),
+        MaxRange(i64),
+        MinLength(usize),
+        MaxLength(usize),
+        Contains(String),
+        StartsWith(String),
+        EndsWith(String),
+        //...
     }
-    pub trait AddRequire<T> {
-        fn require(&mut self, v: T) -> &mut Self;
-        fn build(&mut self, v: T);
+
+    pub trait Validate {
+        fn validate(&mut self) -> Errors;
     }
 
     #[derive(Debug, Serialize, Clone)]
-    pub struct Error<'a> {
-        title: &'a str,
-        message: &'a str,
-        value: Box<dyn ObjectTrait>,
-        ok: bool,
+    pub struct Error {
+        pub title: String,
+        pub message: String,
+        pub value: String,
     }
 
-    pub struct Validator<'a> {
-        err_vec: Vec<Error<'a>>,
-        err: Error<'a>,
+    pub struct Constraint {
+        typ: ConstraintType,
+        title: String,
+        message: String,
     }
 
-    impl Error<'_> {
-        fn new() -> Self {
+    impl Constraint {
+        pub fn new(typ: ConstraintType) -> Self {
             Self {
-                title: "",
-                message: "",
-                value: Box::new("".to_string()),
-                ok: true,
+                typ,
+                title: "".to_string(),
+                message: "".to_string(),
             }
+        }
+
+        pub fn new_with_message(typ: ConstraintType, title: &str, message: &str) -> Self {
+            Self {
+                typ,
+                title: title.to_string(),
+                message: message.to_string(),
+            }
+        }
+
+        pub fn message(&mut self, value: &str) -> &mut Self {
+            self.message = value.to_string();
+            self
+        }
+
+        pub fn title(&mut self, value: &str) -> &mut Self {
+            self.title = value.to_string();
+            self
         }
     }
 
-    impl Serialize for dyn ObjectTrait {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            let s;
-            if let Some(d) = self.as_any().downcast_ref::<String>() {
-                s = serializer.serialize_str(d)
-            } else if let Some(d) = self.as_any().downcast_ref::<i8>() {
-                s = serializer.serialize_i8(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<i16>() {
-                s = serializer.serialize_i16(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<i32>() {
-                s = serializer.serialize_i32(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<i64>() {
-                s = serializer.serialize_i64(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<u8>() {
-                s = serializer.serialize_u8(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<u16>() {
-                s = serializer.serialize_u16(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<u32>() {
-                s = serializer.serialize_u32(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<u64>() {
-                s = serializer.serialize_u64(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<f32>() {
-                s = serializer.serialize_f32(*d)
-            } else if let Some(d) = self.as_any().downcast_ref::<f64>() {
-                s = serializer.serialize_f64(*d)
-            } else {
-                s = serializer.serialize_str("cant serialize!!!")
-            }
-
-            s
-        }
+    pub struct Validator<'a, T> {
+        constraints: Vec<Constraint>,
+        value: &'a T,
     }
 
-    impl<'a> Validator<'a> {
+    pub struct Errors {
+        err_vec: Vec<Error>,
+    }
+
+    impl Errors {
         pub fn new() -> Self {
-            Validator {
+            Self {
                 err_vec: Vec::new(),
-                err: Error::new(),
             }
-        }
-
-        pub fn message(&mut self, value: &'a str) -> &mut Self {
-            self.err.message = value;
-            self
-        }
-
-        pub fn title(&mut self, value: &'a str) -> &mut Self {
-            self.err.title = value;
-            self
         }
 
         pub fn has_error(&self) -> bool {
-            self.err_vec.len() > 0
+            !self.err_vec.is_empty()
         }
 
-        pub fn errors(&self) -> Vec<Error> {
+        // TODO, we don't need this, instead impl Iterator
+        pub fn to_vec(&self) -> Vec<Error> {
             self.err_vec.clone()
         }
 
         pub fn errors_to_string(&self) -> String {
-            serde_json::to_string(&self.errors()).unwrap_or_default()
+            serde_json::to_string(&self.to_vec()).unwrap_or_default()
         }
     }
 
-    impl fmt::Display for dyn ObjectTrait {
-        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{}", self)
+    impl<'a, T> Validator<'a, T> {
+        pub fn new(v: &'a T) -> Self {
+            Self {
+                constraints: Vec::new(),
+                value: v,
+            }
+        }
+
+        pub fn add_constraint(mut self, v: Constraint) -> Self {
+            self.constraints.push(v);
+            self
+        }
+
+        pub fn add(mut self, v: ConstraintType) -> Self {
+            // TODO Add the default title, based on the constraint type
+            // TODO Add the default message, based on the constraint type
+            self.constraints.push(Constraint::new(v));
+            self
         }
     }
 
-    impl Debug for dyn ObjectTrait {
-        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{}", self)
+    impl<'a> Validate for Validator<'a, Option<String>> {
+        fn validate(&mut self) -> Errors {
+            let mut errors = Errors::new();
+            for c in &self.constraints {
+                match c.typ {
+                    ConstraintType::Required => {
+                        // TODO move these blocks out to a function to have a cleaner code!
+                        if self.value.is_none() {
+                            let error = Error {
+                                title: c.title.clone(),
+                                message: c.message.clone(),
+                                value: "".to_string(),
+                            };
+                            errors.err_vec.push(error);
+                        }
+                    }
+                    ConstraintType::MinRange(_) => {}
+                    ConstraintType::MaxRange(_) => {}
+                    ConstraintType::MinLength(min) => {
+                        if let Some(v) = self.value {
+                            if v.len() < min {
+                                let error = Error {
+                                    title: c.title.clone(),
+                                    message: c.message.clone(),
+                                    value: v.to_string(),
+                                };
+                                errors.err_vec.push(error);
+                            }
+                        }
+                    }
+                    ConstraintType::MaxLength(_) => {}
+                    ConstraintType::Contains(_) => {}
+                    ConstraintType::StartsWith(_) => {}
+                    ConstraintType::EndsWith(_) => {}
+                }
+            }
+            errors
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::validation::{AddRequire, Validator};
+    use super::validation::*;
 
     #[test]
     fn require_string() {
-        let opt_value_string_1: Option<String> = Some("x".to_string());
-        let opt_value_string_2: Option<String> = Some("x2".to_string());
-        let opt_value_i8_1: Option<i8> = Some(8);
-        let opt_value_i8_2: Option<i8> = Some(9);
+        let field: Option<String> = Some("x".to_string());
 
-        let mut validator = Validator::new();
-        validator
-            .require("are".to_string()) // data ye ke user vared karde
-            .message("the string is mandatory") // paygami ke agar data match nabashe namyesh bede
-            .title("string without option") // title paygham
-            .build("ar".to_string()); // data morede entezar ke alan match nist ba require
-        validator
-            .require(opt_value_string_1)
-            .message("the string is mandatory")
-            .title("string with option")
-            .build(opt_value_string_2);
-        validator
-            .require(opt_value_i8_1)
-            .message("the string is mandatory")
-            .title("string with option")
-            .build(opt_value_i8_2);
+        // "add" and "add_constraint" are two different ways to add a new constraint
+        let errors = Validator::new(&field)
+            .add(ConstraintType::Required)
+            .add_constraint(Constraint::new_with_message(
+                ConstraintType::MinLength(10),
+                "It's shorter than 10 characters",
+                "Min should be blah blah",
+            ))
+            .add(ConstraintType::MaxLength(20))
+            .validate();
 
-        if validator.has_error() {
-            println!("{}", validator.errors_to_string()) // [{"title":"string without option","message":"the string is mandatory","value":"are","ok":false},{"title":"string with option","message":"the string is mandatory","value":"x","ok":false},{"title":"string with option","message":"the string is mandatory","value":8,"ok":false}]
-        }
-
-        assert_eq!(validator.has_error(), true)
+        assert_eq!(errors.to_vec().len(), 1);
+        assert_eq!(errors.to_vec()[0].title, "It's shorter than 10 characters");
     }
 }
