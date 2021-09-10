@@ -1,7 +1,7 @@
 pub mod validation {
     use serde::Serialize;
     use serde_json;
-    use std::fmt::Debug;
+    use std::fmt::{Debug, Display, Formatter};
 
     pub enum ConstraintType {
         Required,
@@ -16,7 +16,7 @@ pub mod validation {
     }
 
     pub trait Validate {
-        fn validate(&mut self) -> Errors;
+        fn validate(&mut self) -> Vec<Error>;
     }
 
     #[derive(Debug, Serialize, Clone)]
@@ -65,31 +65,6 @@ pub mod validation {
         value: &'a T,
     }
 
-    pub struct Errors {
-        err_vec: Vec<Error>,
-    }
-
-    impl Errors {
-        pub fn new() -> Self {
-            Self {
-                err_vec: Vec::new(),
-            }
-        }
-
-        pub fn has_error(&self) -> bool {
-            !self.err_vec.is_empty()
-        }
-
-        // TODO, we don't need this, instead impl Iterator
-        pub fn to_vec(&self) -> Vec<Error> {
-            self.err_vec.clone()
-        }
-
-        pub fn errors_to_string(&self) -> String {
-            serde_json::to_string(&self.to_vec()).unwrap_or_default()
-        }
-    }
-
     impl<'a, T> Validator<'a, T> {
         pub fn new(v: &'a T) -> Self {
             Self {
@@ -112,8 +87,8 @@ pub mod validation {
     }
 
     impl<'a> Validate for Validator<'a, Option<String>> {
-        fn validate(&mut self) -> Errors {
-            let mut errors = Errors::new();
+        fn validate(&mut self) -> Vec<Error> {
+            let mut errors = Vec::new();
             for c in &self.constraints {
                 match c.typ {
                     ConstraintType::Required => {
@@ -124,7 +99,7 @@ pub mod validation {
                                 message: c.message.clone(),
                                 value: "".to_string(),
                             };
-                            errors.err_vec.push(error);
+                            errors.push(error);
                         }
                     }
                     ConstraintType::MinRange(_) => {}
@@ -137,7 +112,7 @@ pub mod validation {
                                     message: c.message.clone(),
                                     value: v.to_string(),
                                 };
-                                errors.err_vec.push(error);
+                                errors.push(error);
                             }
                         }
                     }
@@ -150,6 +125,37 @@ pub mod validation {
             errors
         }
     }
+
+    pub struct Validators {
+        inner: Vec<Error>,
+    }
+
+    impl Validators {
+        pub fn new() -> Self {
+            Self {
+                inner: Vec::new()
+            }
+        }
+
+        pub fn add_validator<T>(&mut self, mut validate: T) where T: Validate {
+            self.inner.append(&mut validate.validate())
+        }
+
+        pub fn has_error(&self) -> bool {
+            !self.inner.is_empty()
+        }
+
+        // TODO, we don't need this, instead impl Iterator
+        pub fn to_vec(&self) -> Vec<Error> {
+            self.inner.clone()
+        }
+    }
+
+    impl Display for Validators {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            f.write_str(&serde_json::to_string(&self.to_vec()).unwrap_or_default())
+        }
+    }
 }
 
 #[cfg(test)]
@@ -160,18 +166,21 @@ mod tests {
     fn require_string() {
         let field: Option<String> = Some("x".to_string());
 
+        let mut validators = Validators::new();
+
         // "add" and "add_constraint" are two different ways to add a new constraint
-        let errors = Validator::new(&field)
+        let validator = Validator::new(&field)
             .add(ConstraintType::Required)
             .add_constraint(Constraint::new_with_message(
                 ConstraintType::MinLength(10),
                 "It's shorter than 10 characters",
                 "Min should be blah blah",
             ))
-            .add(ConstraintType::MaxLength(20))
-            .validate();
+            .add(ConstraintType::MaxLength(20));
 
-        assert_eq!(errors.to_vec().len(), 1);
-        assert_eq!(errors.to_vec()[0].title, "It's shorter than 10 characters");
+        validators.add_validator(validator);
+
+        assert_eq!(validators.to_vec().len(), 1);
+        assert_eq!(validators.to_vec()[0].title, "It's shorter than 10 characters");
     }
 }
